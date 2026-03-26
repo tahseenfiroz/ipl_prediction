@@ -20,6 +20,13 @@ def load_gemini_api_key(explicit_api_key: str | None = None) -> str | None:
     return None
 
 
+def load_rapidapi_config() -> tuple[str | None, str | None]:
+    _load_dotenv(DEFAULT_ENV_PATH)
+    api_key = os.getenv("RAPIDAPI_KEY") or os.getenv("X-RapidAPI-Key")
+    api_host = os.getenv("RAPIDAPI_HOST") or os.getenv("X-RapidAPI-Host")
+    return api_key, api_host
+
+
 def _load_dotenv(env_path: Path) -> None:
     if not env_path.exists():
         return

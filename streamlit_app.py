@@ -1,25 +1,88 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import streamlit as st
 
 from app.config import load_gemini_api_key
-from app.data_processing.data_processing import (
-    build_match_context,
-    get_unique_values,
-    load_match_data,
-)
+from app.data_processing.data_processing import build_match_context, get_unique_values
 from app.predictor.gemini_predictor import GeminiIPLPredictor
+from app.ui_helpers import DEFAULT_CSV_PATH, load_live_matches, load_matches, load_upcoming_match
 
 
-DEFAULT_CSV_PATH = Path(__file__).resolve().parent / "data" / "ipl_matches.csv"
+def render_header(selected_page: str) -> None:
+    prediction_class = "nav-link active" if selected_page == "prediction" else "nav-link"
+    live_class = "nav-link active" if selected_page == "live-match" else "nav-link"
 
+    st.markdown(
+        """
+        <style>
+        .app-shell {
+            background: linear-gradient(135deg, #fff7ed 0%, #ecfeff 45%, #eff6ff 100%);
+            border: 1px solid rgba(251, 146, 60, 0.18);
+            border-radius: 24px;
+            padding: 1.5rem 1.5rem 1rem 1.5rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+        }
+        .app-title {
+            text-align: center;
+            font-size: 2.35rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin: 0;
+            background: linear-gradient(90deg, #b45309 0%, #0f766e 45%, #2563eb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .app-subtitle {
+            text-align: center;
+            color: #475569;
+            font-size: 0.98rem;
+            margin: 0.35rem 0 1.15rem 0;
+        }
+        .top-nav {
+            display: flex;
+            justify-content: center;
+            gap: 0.85rem;
+            flex-wrap: wrap;
+        }
+        .nav-link {
+            display: inline-block;
+            padding: 0.7rem 1.15rem;
+            border-radius: 999px;
+            text-decoration: none;
+            color: #0f172a;
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(148, 163, 184, 0.24);
+            font-weight: 700;
+            transition: all 0.2s ease;
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+        }
+        .nav-link.active {
+            color: #ffffff;
+            background: linear-gradient(90deg, #ea580c 0%, #0891b2 55%, #2563eb 100%);
+            border-color: transparent;
+            box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
-@st.cache_data(show_spinner=False)
-def load_matches(csv_path: str) -> list[dict]:
-    return load_match_data(csv_path)
+    st.markdown(
+        f"""
+        <div class="app-shell">
+          <h1 class="app-title">IPL Match Predictor</h1>
+          <div class="app-subtitle">Prediction and live score tracking in one place</div>
+          <div class="top-nav">
+            <a class="{prediction_class}" href="?page=prediction" target="_self">Prediction</a>
+            <a class="{live_class}" href="?page=live-match" target="_self">Live Score</a>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def _stadiums_for_city(matches: list[dict], city: str | None) -> list[str]:
@@ -33,9 +96,44 @@ def _stadiums_for_city(matches: list[dict], city: str | None) -> list[str]:
     return sorted(stadiums)
 
 
-def main() -> None:
-    st.set_page_config(page_title="IPL Predictor", page_icon="🏏", layout="wide")
-    st.title("IPL Match Predictor")
+def render_live_match_page() -> None:
+    st.subheader("Upcoming Match")
+    upcoming_match = load_upcoming_match()
+    if upcoming_match:
+        st.info(
+            "Upcoming IPL match: "
+            f"{upcoming_match['team_a']} vs {upcoming_match['team_b']} "
+            f"at {upcoming_match['start_time_local']} "
+            f"([source]({upcoming_match['source_url']}))"
+        )
+    else:
+        st.info("Upcoming IPL match data is not available right now.")
+
+    st.subheader("Live Scores")
+    live_matches = load_live_matches()
+    if live_matches:
+        for live_match in live_matches[:5]:
+            title = f"{live_match['team_a']} vs {live_match['team_b']}"
+            subtitle_parts = [live_match["series_name"], live_match["match_desc"], live_match["venue"]]
+            subtitle = " | ".join(part for part in subtitle_parts if part)
+            st.markdown(f"**{title}**")
+            if subtitle:
+                st.caption(subtitle)
+            st.write(live_match["status"])
+            st.write(live_match["score"])
+    else:
+        st.info("No live matches found right now, or the live-score API did not return usable data.")
+
+
+def render_prediction_page() -> None:
+    upcoming_match = load_upcoming_match()
+    if upcoming_match:
+        st.info(
+            "Upcoming IPL match: "
+            f"{upcoming_match['team_a']} vs {upcoming_match['team_b']} "
+            f"at {upcoming_match['start_time_local']} "
+            f"([source]({upcoming_match['source_url']}))"
+        )
 
     csv_path = DEFAULT_CSV_PATH
     if not csv_path.exists():
@@ -70,10 +168,7 @@ def main() -> None:
         stadium = st.selectbox("Stadium", [""] + stadium_options)
         season = st.number_input("Season", min_value=2008, max_value=2100, value=2026, step=1)
 
-    first_batting_team = st.selectbox(
-        "Batting first",
-        ["Unknown", team_a, team_b],
-    )
+    first_batting_team = st.selectbox("Batting first", ["Unknown", team_a, team_b])
 
     if not st.button("Predict", type="primary", use_container_width=True):
         return
@@ -102,10 +197,7 @@ def main() -> None:
     metric1, metric2, metric3 = st.columns(3)
     metric1.metric("Predicted winner", prediction.get("predicted_winner", "Unknown"))
     metric2.metric("Confidence", f"{prediction.get('confidence', 0)}%")
-    metric3.metric(
-        "Win split",
-        f"{probabilities.get('team_a', 0)}% / {probabilities.get('team_b', 0)}%",
-    )
+    metric3.metric("Win split", f"{probabilities.get('team_a', 0)}% / {probabilities.get('team_b', 0)}%")
 
     st.subheader("Summary")
     st.write(prediction.get("summary", ""))
@@ -125,6 +217,20 @@ def main() -> None:
 
     with st.expander("Evidence sent to Gemini"):
         st.code(json.dumps(match_context, indent=2), language="json")
+
+
+def main() -> None:
+    st.set_page_config(page_title="IPL Predictor", page_icon="🏏", layout="wide")
+    selected_page = st.query_params.get("page", "prediction")
+    if selected_page not in {"prediction", "live-match"}:
+        selected_page = "prediction"
+
+    render_header(selected_page)
+
+    if selected_page == "prediction":
+        render_prediction_page()
+    else:
+        render_live_match_page()
 
 
 if __name__ == "__main__":

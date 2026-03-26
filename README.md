@@ -49,6 +49,10 @@ python -m streamlit run streamlit_app.py
 ```
 
 The Streamlit app uses the repo-local CSV at [data/ipl_matches.csv](/Users/tahseenfiroz/Documents/tfiroz/Project/ipl/pythonProject3/data/ipl_matches.csv).
+It now has a top navigation header with:
+
+1. `Prediction` as the landing view
+2. `Live Match` for live scores and the next IPL fixture
 
 If you already know who is batting first, include it:
 
