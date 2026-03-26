@@ -19,7 +19,7 @@ def fetch_upcoming_ipl_match() -> Optional[dict[str, Any]]:
             )
         },
     )
-    with urlopen(request, timeout=15) as response:
+    with urlopen(request, timeout=6) as response:
         html = response.read().decode("utf-8", errors="ignore")
 
     cleaned = unescape(re.sub(r"\s+", " ", html))

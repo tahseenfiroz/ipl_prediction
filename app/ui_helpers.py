@@ -33,6 +33,6 @@ def load_live_matches() -> list[dict]:
     if not api_key or not api_host:
         return []
     try:
-        return fetch_live_matches_with_scores(api_key, api_host)
+        return fetch_live_matches_with_scores(api_key, api_host, max_matches=3)
     except Exception:
         return []

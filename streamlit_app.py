@@ -98,6 +98,12 @@ def _stadiums_for_city(matches: list[dict], city: Optional[str]) -> list[str]:
 
 
 def render_live_match_page() -> None:
+    st.caption("Live data is loaded on demand to keep the app responsive.")
+    should_load_live_data = st.button("Load Live Match Data", type="primary", use_container_width=True)
+    if not should_load_live_data:
+        st.info("Click `Load Live Match Data` to fetch the upcoming fixture and current live scores.")
+        return
+
     st.subheader("Upcoming Match")
     upcoming_match = load_upcoming_match()
     if upcoming_match:
@@ -113,7 +119,7 @@ def render_live_match_page() -> None:
     st.subheader("Live Scores")
     live_matches = load_live_matches()
     if live_matches:
-        for live_match in live_matches[:5]:
+        for live_match in live_matches[:3]:
             title = f"{live_match['team_a']} vs {live_match['team_b']}"
             subtitle_parts = [live_match["series_name"], live_match["match_desc"], live_match["venue"]]
             subtitle = " | ".join(part for part in subtitle_parts if part)
@@ -127,15 +133,6 @@ def render_live_match_page() -> None:
 
 
 def render_prediction_page() -> None:
-    upcoming_match = load_upcoming_match()
-    if upcoming_match:
-        st.info(
-            "Upcoming IPL match: "
-            f"{upcoming_match['team_a']} vs {upcoming_match['team_b']} "
-            f"at {upcoming_match['start_time_local']} "
-            f"([source]({upcoming_match['source_url']}))"
-        )
-
     csv_path = DEFAULT_CSV_PATH
     if not csv_path.exists():
         st.error(f"CSV file not found: {csv_path}")

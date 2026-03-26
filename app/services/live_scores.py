@@ -5,12 +5,14 @@ from typing import Any, Optional
 from urllib.request import Request, urlopen
 
 
-def fetch_live_matches_with_scores(api_key: str, api_host: str) -> list[dict[str, Any]]:
+def fetch_live_matches_with_scores(
+    api_key: str, api_host: str, max_matches: int = 3
+) -> list[dict[str, Any]]:
     live_payload = _get_json(f"https://{api_host}/matches/v1/live", api_key, api_host)
     matches = _extract_live_matches(live_payload)
 
     enriched_matches: list[dict[str, Any]] = []
-    for match in matches:
+    for match in matches[:max_matches]:
         match_id = match.get("match_id")
         if not match_id:
             continue
@@ -37,7 +39,7 @@ def _get_json(url: str, api_key: str, api_host: str) -> Any:
             "Content-Type": "application/json",
         },
     )
-    with urlopen(request, timeout=15) as response:
+    with urlopen(request, timeout=8) as response:
         return json.loads(response.read().decode("utf-8"))
 
 
