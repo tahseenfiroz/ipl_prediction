@@ -13,19 +13,10 @@ def fetch_live_matches_with_scores(
 
     enriched_matches: list[dict[str, Any]] = []
     for match in matches[:max_matches]:
-        match_id = match.get("match_id")
-        if not match_id:
-            continue
-        try:
-            scorecard_payload = _get_json(
-                f"https://{api_host}/mcenter/v1/{match_id}/hscard",
-                api_key,
-                api_host,
-            )
-            match["score"] = _extract_score_from_hscard(scorecard_payload)
-            match["status"] = _extract_status_from_hscard(scorecard_payload, fallback=match["status"])
-        except Exception:
-            match["score"] = match.get("score") or "Score unavailable"
+        # Keep initial live load fast by relying on the live-matches payload.
+        # Detailed scorecard calls are avoided here because they can stall on hosted deployments.
+        if not match.get("score"):
+            match["score"] = "Score unavailable"
         enriched_matches.append(match)
     return enriched_matches
 
@@ -39,7 +30,7 @@ def _get_json(url: str, api_key: str, api_host: str) -> Any:
             "Content-Type": "application/json",
         },
     )
-    with urlopen(request, timeout=8) as response:
+    with urlopen(request, timeout=5) as response:
         return json.loads(response.read().decode("utf-8"))
 
 
@@ -120,42 +111,3 @@ def _format_score(match_score: dict[str, Any]) -> str:
             innings_lines.append(" | ".join(team_innings))
     return " vs ".join(innings_lines) if innings_lines else "Score unavailable"
 
-
-def _extract_score_from_hscard(payload: Any) -> str:
-    score_lines: list[str] = []
-    if isinstance(payload, dict):
-        for key in ("scoreCard", "scorecard", "scoreCardList"):
-            score_cards = payload.get(key)
-            if isinstance(score_cards, list):
-                for innings in score_cards:
-                    if not isinstance(innings, dict):
-                        continue
-                    title = innings.get("batTeamDetails", {}).get("batTeamName") or innings.get("inningsId")
-                    score = innings.get("scoreDetails") or innings
-                    runs = score.get("runs")
-                    wickets = score.get("wickets")
-                    overs = score.get("overs")
-                    if runs is None:
-                        continue
-                    line = f"{title}: {runs}"
-                    if wickets is not None:
-                        line += f"/{wickets}"
-                    if overs is not None:
-                        line += f" ({overs} ov)"
-                    score_lines.append(line)
-    return " | ".join(score_lines) if score_lines else "Score unavailable"
-
-
-def _extract_status_from_hscard(payload: Any, fallback: str) -> str:
-    if isinstance(payload, dict):
-        for key in ("status", "statusText", "matchStatus"):
-            value = payload.get(key)
-            if isinstance(value, str) and value.strip():
-                return value.strip()
-        match_header = payload.get("matchHeader")
-        if isinstance(match_header, dict):
-            for key in ("status", "stateTitle", "state"):
-                value = match_header.get(key)
-                if isinstance(value, str) and value.strip():
-                    return value.strip()
-    return fallback

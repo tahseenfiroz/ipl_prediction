@@ -98,10 +98,10 @@ def _stadiums_for_city(matches: list[dict], city: Optional[str]) -> list[str]:
 
 
 def render_live_match_page() -> None:
-    st.caption("Live data is loaded on demand to keep the app responsive.")
-    should_load_live_data = st.button("Load Live Match Data", type="primary", use_container_width=True)
+    st.caption("Live data is loaded on demand using a lightweight live-matches fetch.")
+    should_load_live_data = st.button("Load Live Scores", type="primary", use_container_width=True)
     if not should_load_live_data:
-        st.info("Click `Load Live Match Data` to fetch the upcoming fixture and current live scores.")
+        st.info("Click `Load Live Scores` to fetch the upcoming fixture and current live scores.")
         return
 
     st.subheader("Upcoming Match")
