@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from typing import Optional
 
 import streamlit as st
 
@@ -85,7 +86,7 @@ def render_header(selected_page: str) -> None:
     )
 
 
-def _stadiums_for_city(matches: list[dict], city: str | None) -> list[str]:
+def _stadiums_for_city(matches: list[dict], city: Optional[str]) -> list[str]:
     if not city:
         return get_unique_values(matches, "stadium_name")
     stadiums = {

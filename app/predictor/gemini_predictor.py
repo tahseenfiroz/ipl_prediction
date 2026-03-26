@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Optional
 
 
 class GeminiIPLPredictor:
-    def __init__(self, api_key: str | None, model_name: str = "gemini-2.5-flash") -> None:
+    def __init__(self, api_key: Optional[str], model_name: str = "gemini-2.5-flash") -> None:
         if not api_key:
             raise ValueError(
                 "Gemini API key missing. Pass --api-key, set GEMINI_API_KEY, or add it to .env."

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Optional
 
 import streamlit as st
 
@@ -19,7 +20,7 @@ def load_matches(csv_path: str) -> list[dict]:
 
 
 @st.cache_data(ttl=1800, show_spinner=False)
-def load_upcoming_match() -> dict | None:
+def load_upcoming_match() -> Optional[dict]:
     try:
         return fetch_upcoming_ipl_match()
     except Exception:

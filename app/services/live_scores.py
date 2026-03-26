@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Optional
 from urllib.request import Request, urlopen
 
 
@@ -63,7 +63,7 @@ def _walk_nodes(node: Any):
             yield from _walk_nodes(item)
 
 
-def _normalize_match(node: dict[str, Any]) -> dict[str, Any] | None:
+def _normalize_match(node: dict[str, Any]) -> Optional[dict[str, Any]]:
     match_info = node.get("matchInfo", {})
     team1 = _team_name(match_info.get("team1"))
     team2 = _team_name(match_info.get("team2"))
@@ -87,7 +87,7 @@ def _normalize_match(node: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
-def _team_name(team: Any) -> str | None:
+def _team_name(team: Any) -> Optional[str]:
     if not isinstance(team, dict):
         return None
     return team.get("teamName") or team.get("teamSName")

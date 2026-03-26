@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import re
 from html import unescape
-from typing import Any
+from typing import Any, Optional
 from urllib.request import Request, urlopen
 
 
 IPL_MATCHES_URL = "https://www.ipl.com/cricket-matches"
 
 
-def fetch_upcoming_ipl_match() -> dict[str, Any] | None:
+def fetch_upcoming_ipl_match() -> Optional[dict[str, Any]]:
     request = Request(
         IPL_MATCHES_URL,
         headers={

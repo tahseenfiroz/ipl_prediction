@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Optional, Tuple
 
 
 DEFAULT_ENV_PATH = Path(__file__).resolve().parents[1] / ".env"
 
 
-def load_gemini_api_key(explicit_api_key: str | None = None) -> str | None:
+def load_gemini_api_key(explicit_api_key: Optional[str] = None) -> Optional[str]:
     if explicit_api_key:
         return explicit_api_key
 
@@ -20,7 +21,7 @@ def load_gemini_api_key(explicit_api_key: str | None = None) -> str | None:
     return None
 
 
-def load_rapidapi_config() -> tuple[str | None, str | None]:
+def load_rapidapi_config() -> Tuple[Optional[str], Optional[str]]:
     _load_dotenv(DEFAULT_ENV_PATH)
     api_key = os.getenv("RAPIDAPI_KEY") or os.getenv("X-RapidAPI-Key")
     api_host = os.getenv("RAPIDAPI_HOST") or os.getenv("X-RapidAPI-Host")

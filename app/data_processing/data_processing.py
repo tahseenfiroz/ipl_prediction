@@ -4,7 +4,7 @@ import csv
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 
 TEAM_COLUMNS = ("first_batting_team", "second_batting_team")
@@ -19,10 +19,10 @@ class TeamSnapshot:
     win_rate: float
     batting_first_matches: int
     batting_first_wins: int
-    batting_first_win_rate: float | None
+    batting_first_win_rate: Optional[float]
     chasing_matches: int
     chasing_wins: int
-    chasing_win_rate: float | None
+    chasing_win_rate: Optional[float]
     recent_results: list[str]
     recent_wins: int
 
@@ -65,12 +65,12 @@ def build_match_context(
     matches: list[dict[str, Any]],
     team_a: str,
     team_b: str,
-    city: str | None = None,
-    stadium: str | None = None,
-    match_type: str | None = None,
-    season: int | None = None,
-    match_date: str | None = None,
-    first_batting_team: str | None = None,
+    city: Optional[str] = None,
+    stadium: Optional[str] = None,
+    match_type: Optional[str] = None,
+    season: Optional[int] = None,
+    match_date: Optional[str] = None,
+    first_batting_team: Optional[str] = None,
 ) -> dict[str, Any]:
     filtered_matches = _filter_history(matches, season=season, match_date=match_date)
     latest_match_date = filtered_matches[-1]["match_date"] if filtered_matches else None
@@ -109,7 +109,7 @@ def build_match_context(
     return context
 
 
-def _clean_value(value: Any) -> str | None:
+def _clean_value(value: Any) -> Optional[str]:
     if value is None:
         return None
     text = str(value).strip()
@@ -118,7 +118,7 @@ def _clean_value(value: Any) -> str | None:
     return text
 
 
-def _parse_date(value: str | None) -> datetime | None:
+def _parse_date(value: Optional[str]) -> Optional[datetime]:
     if not value:
         return None
     for fmt in ("%d-%m-%Y", "%Y-%m-%d"):
@@ -129,7 +129,7 @@ def _parse_date(value: str | None) -> datetime | None:
     return None
 
 
-def _parse_int(value: str | None) -> int | None:
+def _parse_int(value: Optional[str]) -> Optional[int]:
     if value is None:
         return None
     try:
@@ -139,7 +139,7 @@ def _parse_int(value: str | None) -> int | None:
 
 
 def _filter_history(
-    matches: list[dict[str, Any]], season: int | None = None, match_date: str | None = None
+    matches: list[dict[str, Any]], season: Optional[int] = None, match_date: Optional[str] = None
 ) -> list[dict[str, Any]]:
     if match_date:
         cutoff = _parse_date(match_date)
@@ -228,8 +228,8 @@ def _venue_stats(
     venue_matches: list[dict[str, Any]],
     team_a: str,
     team_b: str,
-    city: str | None,
-    stadium: str | None,
+    city: Optional[str],
+    stadium: Optional[str],
 ) -> dict[str, Any]:
     def team_record(team: str) -> dict[str, Any]:
         team_matches = [match for match in venue_matches if _team_in_match(match, team)]
@@ -259,8 +259,8 @@ def _venue_stats(
 
 
 def _match_type_stats(
-    matches: list[dict[str, Any]], team_a: str, team_b: str, match_type: str | None
-) -> dict[str, Any] | None:
+    matches: list[dict[str, Any]], team_a: str, team_b: str, match_type: Optional[str]
+) -> Optional[dict[str, Any]]:
     if not match_type:
         return None
     requested_bucket = _match_type_bucket(match_type)
@@ -290,7 +290,7 @@ def _match_type_stats(
 
 
 def _innings_bias(
-    matches: list[dict[str, Any]], first_batting_team: str, city: str | None, stadium: str | None
+    matches: list[dict[str, Any]], first_batting_team: str, city: Optional[str], stadium: Optional[str]
 ) -> dict[str, Any]:
     batting_first_matches = [
         match for match in matches if match.get("first_batting_team") == first_batting_team
@@ -318,7 +318,7 @@ def _innings_bias(
     }
 
 
-def _match_type_bucket(value: str | None) -> str | None:
+def _match_type_bucket(value: Optional[str]) -> Optional[str]:
     if not value:
         return None
     normalized = value.strip().lower()
